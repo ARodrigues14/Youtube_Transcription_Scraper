@@ -70,12 +70,34 @@ When the text has loaded, the script asks for a prompt. Type a question or instr
 
 Claude answers in the language you write the prompt in.
 
+To ask a single question and exit, pass the prompt as a second argument:
+
+```bash
+python ask_claude.py "https://www.youtube.com/watch?v=XXXXXXXXXXX" "Summarise this in five bullet points"
+```
+
+### Answers in Obsidian
+
+Every answer is also saved to an [Obsidian](https://obsidian.md) note, which opens in Obsidian after the first answer:
+
+- The note is created at `<vault>/YouTube/<video title>.md`. It has the video link in its properties, the transcript in a folded callout, and one section per prompt with Claude's answer.
+- Asking about the same video again adds to the existing note.
+- When you start `ask_claude.py` without an argument (or double-click `ask_claude.bat`), it lists your 10 most recent videos. Pick a number to keep asking about that video: the transcript is read back from its note, so YouTube isn't contacted again. You can also pass a note's path, or drag the note onto `ask_claude.bat`.
+- The default vault is `Documents/Obsidian Vault` in your home folder. To use another vault, set the `OBSIDIAN_VAULT` environment variable to its folder, for example `setx OBSIDIAN_VAULT "C:\Users\me\Documents\Vault Tese"` on Windows. To change the folder inside the vault, edit `OBSIDIAN_FOLDER` in `ask_claude.py`.
+- If the vault folder doesn't exist, answers are only printed.
+
+### Windows launcher
+
+On Windows, double-click `ask_claude.bat` to start `ask_claude.py` in a console window with the project's virtual environment. You can also drag a `.txt` file onto it to load that file. To launch it from the Desktop, right-click `ask_claude.bat` → *Show more options* → *Send to* → *Desktop (create shortcut)*.
+
 ## How it works
 
 - `transcription.py` takes the 11-character video ID from the link and uses `youtube-transcript-api` to download the captions. It then joins them into one block of text.
 - `ask_claude.py` wraps the transcript in `<transcript>` tags and adds a short instruction telling Claude to treat it as material to analyse, not as instructions. Your prompt goes after it.
 - The message reaches `claude -p` through stdin, which avoids the Windows command-line length limit on long transcripts.
 - `ANTHROPIC_API_KEY` is removed from the environment before Claude Code is called, so the request uses your subscription login and is not billed to the API.
+- The video title for the note's name comes from YouTube's public oEmbed endpoint. If that lookup fails, the note is named after the video ID.
+- The note is opened with an `obsidian://open?path=...` link. Obsidian reloads it by itself when more answers are added.
 
 ## Limitations
 
@@ -87,6 +109,7 @@ Claude answers in the language you write the prompt in.
 
 ```
 youtube_ciscraper/
+├── ask_claude.bat     # Windows double-click launcher for ask_claude.py
 ├── ask_claude.py      # Interactive Q&A over a transcript using Claude Code
 ├── transcription.py   # Fetches a YouTube transcript and saves it to transcription.txt
 └── transcription.txt  # Sample output (transcript of the most recent run)
